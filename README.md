@@ -28,7 +28,4 @@ List of files in the repo:
 [Insert]
 
 ## More Information
-
-Note: It was not possible to upload the raw text data on all the transcripts scraped in 01.scraping.ipynb to Github due to a very large file size. The data can be reproduced by running the Jupyter Notebook again. 
-
 This project was created as an exam project for a graduate course (Social Network Analysis) at University of Copenhagen. The course repo is available here: https://github.com/golovchenko/sna2018.

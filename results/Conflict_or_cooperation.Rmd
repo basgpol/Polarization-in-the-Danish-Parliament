@@ -1,0 +1,569 @@
+---
+title: 'Conflict or cooperation?'
+subtitle: 'A study of polarization in the Danish parliament'
+author: 
+- Bjørn August Skeel-Gjørling
+- Social Network Analysis
+- 35,179 characters
+date: "17 dec 2018"
+output: 
+  pdf_document:
+    fig_caption: yes
+    fig_height: 4
+    fig_width: 7
+    number_sections: yes
+fontsize: 12pt
+linestretch: 1.5
+geometry: margin=2.5cm
+---
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(fig.pos = 'h')
+```
+
+
+```{r backgroundcode, echo=FALSE, include=FALSE}
+################
+### Contents ###
+################
+
+# 1) Loading packages
+# 2) Loading data
+# 3) Data manipulation
+
+# ==========================================================================================
+
+###########################
+### 1) LOADING PACKAGES ###
+###########################
+
+library(dplyr)
+library(lubridate)
+library(igraph)
+library(ggplot2)
+library(zoo)
+library(data.table)
+library(scales)
+
+# ==========================================================================================
+
+###########################
+##### 2) LOADING DATA #####
+###########################
+
+#loading datasets from github
+df_voting_types = read.csv(url("https://raw.githubusercontent.com/basgpol/Polarization-in-the-Danish-Parliament/master/data/voting_votetypes.csv"), header = TRUE)
+df_polarization = read.csv(url("https://raw.githubusercontent.com/basgpol/Polarization-in-the-Danish-Parliament/master/data/voting_polarization.csv"), header = TRUE)
+df_corrected = read.csv(url("https://raw.githubusercontent.com/basgpol/Polarization-in-the-Danish-Parliament/master/data/voting_data_corrected.csv"), header = TRUE)
+
+#loading datasets from server on personal computer (fileto large to upload on github)
+df = read.csv("C:/Users/BjørnAugust/OneDrive for Business/Dokumenter/Studie/11. semester/Social Network Analysis/scripts/voting_data.csv", header = TRUE)
+
+
+
+# ==========================================================================================
+
+################################
+##### 3) DATA MANIPULATION #####
+################################
+
+df_merge = left_join(df_polarization, 
+                    select(df_voting_types, afstemningid, yes_n, no_n, neither_n, absent_n),
+                    by = "afstemningid") 
+
+# Changing format for date-variable and save as new dfs          
+df_final = df_merge %>% 
+  mutate(dato = as_date(dato))
+
+df_correct = df_corrected %>% 
+  mutate(dato = as_date(dato))
+
+# Creating list with election dates
+election_dates= c(as.Date("2015-06-18"), as.Date("2011-09-15"), as.Date("2007-11-13"), as.Date("2005-02-08"))
+
+
+# ==========================================================================================
+
+```
+
+\pagebreak
+\tableofcontents
+\pagebreak
+
+# Introduction
+> *"The study of politics is concerned with understanding how authoritative 
+decisions are made and executed for a society"* (Easton, 1957:1)
+
+In Denmark and most other developed societies authoritative decisions such as laws and regulations are made by democratically elected parliaments. Understanding the concept of parliamentary democracy therefore becomes the foundational core of political science. Thus, democracy is probably the most debated and researched concept in political science. A red thread in this debate has been discussing what democracy is and should be. How do we define the concept of democracy? Central to this debate is Arendt Lijphart with the distinction between the consensus model of democracy and the majoritarian model of democracy. These two ideal types represent two fundamentally different understandings of democracy. The consensus model is the understanding that authoritative decisions should be made in consensus, whereas the majoritarian model views democracy as an institutional set-up which enables decision making in an environment full of conflicts (Lijphart, 1999).
+
+Unfortunately, the debate about democratic ideal types often remains on a theoretical level without developing into concrete empirical analyses. This paper tries to bring empirical evidence to the table by investigating the state and development of the Danish parliamentary democracy. More precisely, the paper tries to answer the following research question:
+
+> *To what extent do we see polarization or convergence in the voting behaviour among members of the Danish Parliament?*
+
+To answer the stated research question, I will conduct a descriptive social network analysis of the voting behavior of members in the Danish parliament. The remainder of this paper continues in five subsequent parts. First, I will introduce the theoretical concepts of interest. Second, I will describe the research design and specifically how parliamentary votes can be viewed as a social network and how graph density and modularity can indicate polarization or convergence in a Parliament. Third, the paper analyzes the development in parliamentary polarization in the period 2004 to 2018. Last, validity and implications are discussed.
+
+\pagebreak
+# Theory
+In this section, the theoretical concepts of consensus democracy and majoritarian democracy are introduced.
+
+## Democracy: An ambiguous theoretical concept
+As stated in the introduction, this paper tries to investigate in which direction the Danish democracy is heading. First step is to clearly define what I mean by democracy. Democracy is a very ambiguous theoretical concept that on a very broad level means "rule of the people" (Kopstein et. al. 2014: 2). I practice the regime type has been carried out very differently in different countries making it difficult to develop one common understanding of how to define democracy (Sartori, 1970: see "the travelling problem"). Thus, political scientists have come up with different models of democracy with different characteristics (Strömback, 2005, Manin, 2002; Schumpeter 1942; Putnam 2000; Habermas, 1995 etc.). Among these different models of democracy this paper will focus on two specific models described by Arendt Lijphart (1999): (1) The Majoritarian Model of Democracy (2) The Consensus Model of Democracy. The two models are chosen as the theoretical foundations of this paper due to the importance of parliamentary voting behaviour in both models. In short, the most distinctive characteristic separating the consensus model and the majoritarian model is the ideal turnout of a parliamentary vote. 
+
+## The Majoritarian Model of Democracy
+The majoritarian model refers to an understanding of democracy as an institutional set-up which enables decision making in an environment full of conflicts. The majoritarian model sees disagreement and divergent preferences as a basic condition in society. In this setting, political institutions should be established to ensure that authoritative decisions are in line with the preferences of *the majority of the people* (Lijphart, 1999: 2). In other words, the goal of parliamentary debate and voting is reaching a majority. The goal is not consensus.
+
+With the acceptance of conflict as a central parameter of a democracy, the majoritarian model is very similar to the competitive democracy model typically associated with Joseph Schumpeter (1942) and in a Danish context Alf Ross (1967). Both models view democracy as a political institution based on competition among potential representatives for the support of the electoral. Furthermore, the majoritarian model is closely related to other central concepts in political science. One clear example is Anthony Downs' median voter theorem with the focus on majority rule and conflicting preferences among politicians and citizens (Downs, 1957). 
+
+## The Consensus Model of Democracy
+The consensus model refers to an understanding of democracy as an institutional framework that enables political deliberation leading to authoritative decisions taken by consensus. Thus, the consensus model views political debate as a tool to overcome disagreement and divergent preferences.  Focus is therefore on the political debate and bringing all perspectives into consideration. The purpose of the deliberation is hence to ensure that authoritative decisions are in line with the preferences of *as many as possible* (Lijphart, 1999: 2). The ideal result of the parliamentary debate and voting is therefore reaching consensus.
+
+The consensus model is closely related to the concepts of communicative rationality and deliberative democracy typically associated with Jürgen Habermas (Habermas, 1995; Fishkin et. al., 2003). All three concepts put strong emphasize on deliberation as a central component in democratic decision-making. In a Danish context, the consensus model is also closely related to the conversational focus in Hal Koch's description of democracy as a way of life (Koch, 1991).
+
+## Theoretical evaluation of polarization
+The two models of democracy view parliamentary polarization very differently. By parliamentary polarization, I here refer to divergence in voting behavior among members of parliament (hereafter MPs), *cf. section 3.3*. As stated, the majoritarian model sees conflict and disagreement as the natural state of politics. Thus, parliamentary polarization is perfectly fine according to the majoritarian model as long as the parliament still performs its role as effective legislator by reaching majorities. 
+
+On the contrary, the consensus model evaluates divergence in voting behavior among MPs negatively. The reason is that a healthy democracy according to the consensus model is characterized by deliberation and a tendency to reach consensus. Thus, parliamentary polarization signals a movement away from the ideal condition of political institutions. 
+
+Table 1 below briefly summarize the two models and their view on parliamentary polarization.
+
+\begin{table}[htbp]
+\centering
+\begin{tabular}{|p{2,5cm}|p{6cm}|p{6cm}}
+              & \textbf{The Majoritarian Model}                                                   & \textbf{The Consensus Model}                                                            \\
+Description   & Authoritative decisions should be taken if a majority supports it.                 & Authoritative decision should be a result of deliberation and consensus decision-making. \\
+Parliamentary polarization & Parliamentary votes should follow the majority rule. Polarization is not a issue. & Parliamentary votes should ideally be unanimous. Polarization is a issue.               
+\end{tabular}
+\end{table}
+
+\pagebreak
+# Research Design
+This section presents the research design of the paper. First, I describe why voting behaviour in the Danish parliament can be viewed as a social network. Second, I argue why graph density and modularity are good measures of parliamentary polarization. Third, I describe how the voting data was collected. 
+
+## The Danish Parliament as a social network
+In order to understand why voting data can be viewed as a social network, I will start by defining what a social network is.
+ 
+Social network analysis (hereafter SNA) is used widely in social sciences and is the study of relations between social entities (e.g. actors). Thus, SNA views these entities and their actions as linked and interdependent rather than independent and autonomous. The actors are linked to each other through ties which function as channels of resources both material and non-material. Hence, SNA often focuses on describing the patterns and implications of these networks (Wasserman & Faust, 1994: 3-5). The presence of relational information linking the actors are crucial for the existence of a social network. More formally, Wasserman and Faust define a social network as a "*finite set or sets of actors and the relation or relations defined on them*" (Wasserman & Faust, 1994: 20). 
+
+Social networks are most often presented using graphs. In this context the terms "nodes" and "ties" are important to mention. Nodes represents the actors or social entities of the network whereas ties represent the linkages between actors. In graph theory other synonyms such as vertices and edges are also used (Wasserman & Faust, 1994: 94-95).
+
+I will argue that voting behaviour among MPs fits Wasserman and Faust definition of a social network. The Danish parliament consists of 179 MPs making it a finite number of actors. The relationships between these MPs can be operationalized as their votes in parliament. More specifically, the nodes of the voting network become the different MPs attending the vote. The ties connecting the nodes will indicate rather two MPs voted the same. In this network the ties will be undirected, as the distinction between "sender" and "receiver" in the relationship becomes irrelevant.
+
+- *Nodes*: The different MPs attending votes
+- *Ties*: Indicate rather two MP's voted the same
+
+The voting network can furthermore be constructed in two different ways. First, a voting network can be constructed for each parliamentary vote. In this case the voting network will typically consists of components grouping politicians corresponding to "yes", "no" and "neither votes", *cf. figure 1 (left)*. Another way of constructing the voting network is grouping votes from an entire parliamentary year. A parliamentary year typically takes place from October to June the following year. In this case, the voting network will no longer consist of distinct components as most politicians voted the same at some point during the parliamentary year, *cf. figure 1 (right)*. This paper focuses on networks of each parliamentary vote. 
+
+```{r create_figure1, echo=FALSE, warning=F, message=FALSE, fig.cap="Two types of voting networks",  out.width='.49\\linewidth', fig.width=3, fig.height=3,fig.show='hold',fig.align='center', fig.pos='h' }
+
+## Creating plot of single vote
+df_single1 = filter(df, periodeid == 30)
+id_single = first(df_single1$afstemningid)
+
+df_single = df %>% # creating edge liste
+  filter(afstemningid == id_single) %>% #removs all other observations
+  select(navn, type) %>% #keep only variables of actorid and votetype
+  filter(type != "Fravær") # removing all the members that didn't vote
+g_single = graph.edgelist(as.matrix(df_single), directed = F) # formating as a igraph object
+V(g_single)$type = bipartite.mapping(g_single)$type
+one_mode_single = bipartite_projection(g_single)$proj1 # turn into one-mode network
+
+# Creating single plot
+plot_single = plot(one_mode_single,
+     main = "Network for single vote",
+     vertex.size = 5,
+     #vertex.label.color = NA,
+     vertex.label = NA,
+     vertex.label.cex = 1,
+     vertex.color = "grey",
+     ylim = c(-1, 1),
+     edge.lty = "dashed",
+     edge.arrow.size= 0.1,
+     edge.arrow.width= 0.1,
+     edge.color= "light grey",
+     width = 0.01)# adjust focus)
+
+# Creating a df with votes from a single period
+df_period = df %>% 
+  filter(periodeid == 28) %>% 
+  mutate(voting_vote = paste(as.character(afstemningid), as.character(type), sep = ":")) %>%
+  filter(type != "Fravær") %>% 
+  filter(afstemningsbeskrivelse == "Endelig vedtagelse") %>% 
+  select(navn, voting_vote) 
+
+# Plotting Period Voting Network
+g_period = graph.data.frame(as.matrix(df_period), directed = F) # formating as a igraph object
+V(g_period)$type = bipartite.mapping(g_period)$type
+one_mode_period = bipartite_projection(g_period)$proj1
+
+plot_period = plot.igraph(one_mode_period,
+            main = "Network for parliament year",
+            vertex.size = 5,
+            #vertex.label.color = NA,
+            vertex.label = NA,
+            vertex.label.cex = 1,
+            vertex.color = "grey",
+            ylim = c(-1, 1),
+            edge.lty = "dashed",
+            edge.arrow.size= 0.1,
+            edge.arrow.width= 0.1,
+            edge.color= "light grey",
+            width = 0.01)# adjust focus)
+
+```
+
+The chosen nodes and ties in this paper are based on the theoretical focus on parliamentary polarization among MPs.  But it is important to note the limitations associated with the selected nodes and  ties. First, the unit of analysis is the members of parliament. Thus, we can't measure divergence in the voting behaviour of political parties in the Danish parliament. Second, other ties of interest linking MPs could be education, hometown, party affiliation, board memberships, former jobs etc. With these alternative ties we could investigate the recruitment pools of Danish politicians or power structures outside of the parliamentary work. 
+
+## Conceptualization of parliamentary polarization
+As stated in the research question and the democratic models introduced in the theory section, the central concept in this paper is parliamentary polarization . It is important to note that parliamentary polarization can be measured in different ways according to the three key roles of MPs in a representative democracy:
+
+1. *Democratic debate*: MPs play a central role as facilitators of political debate. Thus, parliamentary polarization could be measured by focusing on convergence or divergence in the political debate either in the parliament or media.
+2. *Democratic representation*: MPs play a central role as political representatives for the population. Parliamentary polarization could therefore be measured by investigating if MPs become more alike or different in terms of gender, age, education, ethnicity etc. 
+3. *Democratic decision-making*: MPs play a key role as legislators in a democracy. Looking at divergence or convergence in voting behaviour among MP's is hence an interesting conceptualization of parliamentary polarization. 
+ 
+I choose to focus on divergence or convergence in voting behavior among Danish MPs when analyzing parliamentary polarization due to two reasons. First, I will argue that the legislative role is the most important function of the parliament. As a result, voting becomes the most important activity of MPs. Second, the consensus model and the majoritarian model evaluates voting polarization very differently, *cf. section 2.4*. Therefore, voting behaviour becomes an interesting conceptualization of polarization as it helps us determine towards which model the Danish democracy is heading.[^1]
+
+[^1]: Conceptualization refers to the process of moving from an overall ambiguous concept to a more specific and systematized concept (Adcock & Collier, 2001).
+
+## Operationalization: Measuring parliamentary polarization
+This paper uses social network analysis to investigate the development of the Danish democracy. In that regard, I will argue that changes in graph density and modularity of voting networks are good measures of divergence and convergence in MP's voting behaviour and thus good operationalizations of parliamentary polarization.[^2]
+
+[^2]: Operationalization refers to the process of finding concrete measures of a systematized concept (Adcock & Collier, 2001)
+
+### Graph density as a measure of parliamentary polarization
+Graph density is a metric used to measure how well a network is connected. Graph density is basically the ratio between the number of actual ties in the network relative the number of possible ties in the network. Graph density (denoted $\Delta$) is calculated with the following formula where $L$ is the number of actual ties and $g$ is number of nodes (Wasserman & Faust, 1994: 102):
+$$ \Delta = \frac {L}{g*\frac{g-1}{2}}= \frac {L*2}{g*(g-1)} $$
+
+The graph density measure ranges from 0 to 1. If no ties are present in the network (L=0) the graph density becomes 0. If all possible ties are there, the graph is called "complete" and the graph density becomes 1. In relation to parliamentary polarization, a voting network with a graph density of 1 is equivalent to a perfect consensus vote, where all MPs voted the same. A voting network with a graph density of 0 is equivalent to perfect polarization, where all MPs voted something different. In reality, perfect polarization is not a possibility. The reason is that 90 MPs must attend a vote in order for it to happen and MPs can only vote three things ("yes", "no" or "neither"). Thus, the minimal graph density of a voting network in the Danish parliament can in practice be no smaller than 0.33.[^3] 
+
+Graph density is used as a measure of voting polarization because the metric takes the number of nodes in the network into account. Thus, changes in the number of MPs attending the voting will not change the graph density significantly (debated in section 5.1.1). This is very important in this paper because the number of MPs attending varies from 93 to 179 in the investigated period. Because the graph density measure takes the number of MPs into account, we can use graph density to compare votes across time. The argument that graph density can be used to compare networks with different number of actors has been debated in the social network literature (Scott, 2017: 85; Prell, 2012: 170). This is a potential issue of graph density as a measure of parliamentary polarization which will be discussed further in section 5.1.1.
+
+An alternative metric to measure a networks connectedness is mean degree. Degree refers to the number of ties connected to a node (Wasserman & Faust, 1994: 100). The mean degree thus calculates the number of MPs that voted the same as each MP and then calculates the average for all MP's attending the vote. I don't use mean degree as a measure of parliamentary polarization in this paper because the metric doesn't normalize in regard to the number of MP's attending the vote. Normalized mean degree is the same as graph density.
+
+[^3]: Calculating minimal graph density: $$(30\cdot(30-1)/2)\cdot3/(90\cdot(90-1)/2) = 0.33.$$
+
+### Modularity as a measure of parliamentary polarization
+An alternative way to measure parliamentary polarization is modularity. Modularity is most often used in social network analysis focusing on community detection. Community detection is a method to divide actors in a network into subgroups. In practice, this means partitioning nodes into groups with high within-group cohesion compared to between-group cohesion (Porter et al., 2009: 1086). But modularity has also been used in political science research to measure polarization in parliaments (Zhang et. al., 2008; Waugh et. al., 2009; Fierascu et. al., 2018 etc.). The idea behind modularity is to measure to what extent group members are connected to each other more than if the members were connected at random. The underlying assumption is that random graphs should not have a cluster structure (Dal Maso et. al., 2014: 3). Modularity (denoted $Q$) is calculated with the following formula, where $A_{ij}$ represents the weight of the ties between $i$ and $j$, $k_i$ = $\sum_jA_{ij}$ is the sum of the weights of the ties attached to node $i$, $c_i$ is the subgroup to which node $i$ is belonging, the $\delta$-function $\delta(u, v)$ is 1 if $u = v$ and 0 otherwise and $m = \frac{1}{2}\sum_{i,j}A_{ij}$ (Blondel et. al., 2008: 2):
+$$ Q = \frac{1}{2m}\sum_{i,j}[A_{ij}-\frac{k_ik_j}{2m}]\delta(c_i, c_j)$$
+Modularity ranges from -1 to 1 (Blondel et. a., 2008: 3). In the context of parliamentary polarization, a high modularity represents very cohesive subgroups and thus high polarization, whereas a low modularity score represents less cohesive groups and hence parliamentary convergence. A modularity score of 0 represents a consensus vote.
+
+Just as graph density, the modularity score takes the number of nodes in the network into account (Porter et al., 2009: 1086). Therefore, changes in the number of MPs attending the voting will not change the measure.
+
+## Data: Voting behaviour in the Danish Parliament
+As data, I collected all votes casted by Danish MPs between the 7th October 2004 and 8th of November 2018. The data consist of 1.190.700 votes given by MPs in 6652 parliamentary votes. The data was scraped from the API of the Danish Parliament ("Folketingets Åbne Data") using Python and R. The purpose of the API is to make data about the parliamentary work open to the public (The Danish Parliament, 2018a).  In practice, the voting data was collected using two scraper-functions. The first collected metadata about each vote whereas the second function collected data on the actual MP-votes. The analysis only looks at final parliamentary votes (= 3752). Thus, the different votes in the beginning of the legislative process are excluded from the analysis. The reason is that final votes is the best measure of the disagreement among MPs on the authoritative decisions of the parliament, which is the theoretical interest of this paper. Code and data is available in the appendix and here: https://github.com/basgpol/Polarization-in-the-Danish-Parliament.
+
+\pagebreak
+# Analysis
+In this section, I will analyze if the Danish democracy is moving towards the consensus model or the majoritarian model of democracy by using graph density and modularity as measures of parliamentary polarization. This is done by investigating general trends in the two metrics across different parliamentary votes. The analysis finds a big change in the MPs voting behaviour, which is then analyzed further both quantitatively and qualitatively. 
+
+## Descriptive analysis: Towards the Consensus Model?
+As described in section 3.4. graph density of voting networks can be used to measure parliamentary polarization. Graph density ranges from 0 to 1, where 1 indicates a consensus vote. In order to detect increased parliamentary polarization, I look at graph density of votes in the Danish parliament across time. Figure 2 shows the graph density for all final votes in the Danish parliament since October 2002. The graph densities are illustrated as rolling means to reduce noise in the plot. The vertical lines represent parliamentary elections, whereas the different colours of each vote indicate different parliament years. The figure shows evidence for increased convergence in the Danish parliament as we see higher graph densities for votes in recent years. Furthermore, we see a significant jump in the average graph density from a pretty stable level in the period 2002-2013 around 0.45 to around 0.8 in 2014 and onwards. This is a pretty high graph density score relative to many other social networks. The jump happens in the middle of an election period (2011-2015) indicating the increase in parliamentary convergence can't be a result of a change in the members of parliament. 
+
+```{r figure2, echo=FALSE, warning=F, message=FALSE, fig.cap="Overall trend in graph density"}
+# Visualizing overall trend in graph density as rolling average and period id
+overall_trend_endelig_vedtagelse_rolling_period_id = df_final %>% 
+  filter(afstemningsbeskrivelse == "Endelig vedtagelse") %>% 
+  arrange(dato) %>% 
+  mutate(periodeid = as.factor(periode)) %>% 
+  mutate(rolling_mean_gd = rollmean(gd, k = 5, na.pad = TRUE)) %>% 
+  ggplot(aes(x = dato, y = rolling_mean_gd)) +
+  geom_point(aes(colour = periodeid)) + # create a plot
+  geom_smooth() + # create a smooth line
+  geom_vline(aes(xintercept = election_dates[1]), colour="black", linetype = "dashed") +
+  geom_vline(aes(xintercept = election_dates[2]), colour="black", linetype = "dashed") +
+  geom_vline(aes(xintercept = election_dates[3]), colour="black", linetype = "dashed") +
+  geom_vline(aes(xintercept = election_dates[4]), colour="black", linetype = "dashed") +
+  scale_x_date(date_breaks = "1 year", labels = date_format("%Y"))+ # formatting x-axis
+  scale_y_continuous(breaks = seq(0.3,1,0.1)) +
+  theme_minimal() + # set theme
+  xlab("Date")+ # name label for x-axis
+  ylab("Graph Density")+ # name label for y-axis
+  theme(plot.title = element_text(hjust = 0.5),
+        legend.position = "none") + # center plot title
+  labs(title = "Development in graph density in Parliamentary votes", # give title
+       caption = "Dots are rolling means and colours indicate different parliamentary years") # give note
+overall_trend_endelig_vedtagelse_rolling_period_id
+```
+
+```{r figure3, echo=FALSE, warning=F, message=FALSE, fig.cap="Overall trend in modularity"}
+# Visualizing overall trend in modularity as rolling average and period id
+overall_trend_endelig_vedtagelse_rolling_period_id_modularity = df_final %>% 
+  filter(afstemningsbeskrivelse == "Endelig vedtagelse") %>% 
+  arrange(dato) %>% 
+  mutate(periodeid = as.factor(periode)) %>% 
+  mutate(rolling_mean_modularity = rollmean(modularity, k = 5, na.pad = TRUE)) %>% 
+  ggplot(aes(x = dato, y = rolling_mean_modularity)) +
+  geom_point(aes(colour = periodeid)) + # create a plot
+  geom_smooth() + # create a smooth line
+  geom_vline(aes(xintercept = election_dates[1]), colour="black", linetype = "dashed") +
+  geom_vline(aes(xintercept = election_dates[2]), colour="black", linetype = "dashed") +
+  geom_vline(aes(xintercept = election_dates[3]), colour="black", linetype = "dashed") +
+  geom_vline(aes(xintercept = election_dates[4]), colour="black", linetype = "dashed") +
+  scale_x_date(date_breaks = "1 year", labels = date_format("%Y"))+ # formatting x-axis
+  scale_y_continuous(breaks = seq(0,0.7,0.1)) +
+  theme_minimal() + # set theme
+  xlab("Date")+ # name label for x-axis
+  ylab("Modularity")+ # name label for y-axis
+  theme(plot.title = element_text(hjust = 0.5), # center plot title
+        legend.position = "none") +   # remobel legend
+  labs(title = "Development in modularity in Parliamentary votes", # give title
+       caption = "Dots are rolling means and colours indicate different parliamentary years") # give note
+
+overall_trend_endelig_vedtagelse_rolling_period_id_modularity
+```
+
+Next step is to test the robustness of the initial finding by changing the metric used to measure parliamentary polarization. Figure 3 shows a similar pattern using modularity to measure polarization in the Danish parliament. Figure 3 shows an overall decreasing trend in modularity. The average modularity score fall from approximately 0.45 in the period 2004-2013 to approximately 0.1 in most recent years. The lower modularity score indicates less cohesive voting blocks and hence parliamentary convergence. Once again, we see a significant jump in 2014.
+
+Overall, we see initial evidence for increased parliamentary convergence when looking at the trends for graph density and modularity across parliamentary votes in the period 2004-2018. In other words, it looks like the Danish democracy is moving towards the consensus model. On the other hand, the two measures of polarization look pretty stable both in the periods before and after 2014. This can be problematic if the overall trend is solely driven by the jump in 2014.Thus, it makes sense to further investigate what happened in 2014. 
+
+## Explaining the 2014-jump: Mistakes in the voting registration
+This section focus on explaining the large increase in parliamentary convergence measured by graph density and modularity score. First step is to investigate the voting behaviour of Danish MP's in the parliamentary debates around 2014. In a social network perspective, I will look at the content of the ties connecting the MP's in each voting network. Figure 4 show the number of yes-votes, no-votes, neither-votes and absent MPs for each parliamentary vote in the period 2004-2018. The figure shows a concerning pattern in the voting behaviour of MPs. The number of yes and no-votes are stable across time, but we see a massive change in the number of neither-votes and absent MPs right around 2014. Specifically, we see the average number of neither-votes decreasing from around 70 before 2014 to around 5 in the years after 2014. The number of absent MPs experience the opposite development moving from around 5 in the years before 2014 to around 70 in the years after 2014. 
+
+```{r figure4, echo=FALSE, warning=F, message=FALSE, fig.cap="Overall trend in vote types"}
+trend_vote_types = df_final %>% 
+  filter(beskrivelse == "Endelig vedtagelse") %>%
+  arrange(dato) %>% 
+  ggplot(aes(x = dato)) +
+  geom_smooth(aes(y = yes_n, colour = "Yes votes"), se = F, linetype = 2) +
+  geom_smooth(aes(y = no_n, colour = "No votes"), se = F, linetype = 5) +
+  geom_smooth(aes(y = neither_n, colour = "Neither votes"), se = F, linetype = 1) +
+  geom_smooth(aes(y = absent_n, colour = "Absent MPs"), se = F, linetype = 4) +
+  geom_vline(aes(xintercept = election_dates[1]), colour="black", linetype = "dashed") +
+  geom_vline(aes(xintercept = election_dates[2]), colour="black", linetype = "dashed") +
+  geom_vline(aes(xintercept = election_dates[3]), colour="black", linetype = "dashed") +
+  geom_vline(aes(xintercept = election_dates[4]), colour="black", linetype = "dashed") +
+  scale_x_date(date_breaks = "1 year", labels = date_format("%Y"))+ # formatting x-axis
+  scale_y_continuous(breaks = seq(0,100,20)) +
+  theme_minimal() + # set theme
+  xlab("Date")+ # name label for x-axis
+  ylab("Number of different votes")+ # name label for y-axis
+  theme(plot.title = element_text(hjust = 0.5)) +
+  labs(title = "Development of vote types ", # give title
+       caption = "Dashed lines indicate parliamentary elections", # inserting note
+       colour = "Vote types") # change legend title
+
+trend_vote_types 
+```
+
+  
+This finding might be very problematic for the analysis of this paper. The pattern illustrated in figure 4 can either be explained by a major change in the voting norms of Danish MPs right around 2014 or it can be explained by mistakes in the voting data provided by the API of the Danish Parliament. Because of this, I held short interviews with a MP and two employees of the Danish parliament. As a result of the interviews, it is now clear that the parliamentary administration has made mistakes with the registration of votes in their API-database. More precisely, the administration have registered absent MPs as neither-votes and neither-votes as absent MPs in the period 2004-2013. The mistake by the Danish parliament is the reason behind the unrealistically high numbers of neither-votes in the period before 2014. The mistake is hence the hidden explanation behind the major jump in graph density and modularity in 2014.  
+
+## Measuring polarization on corrected data
+After correcting the voting data for the period 2002-2013, we see a much more stable pattern of casted votes in the Danish parliament.  Figure 5 show the number of yes-votes, no-votes, neither-votes and absent MPs for each parliamentary vote in the period 2004-2018 after the correction of the data. As illustrated, we see much more stable developments in the different voting types. As an example, neither-votes remain at a pretty low level with an average around 5, whereas the number of absent MPs is stable around 70 over the entire period. This also indicates, that there are no major changes in number of MPs attending the parliamentary votes which is relevant when discussing the validity of graph density as a measure for parliamentary polarization, *cf. section 5.1.1*. 
+
+```{r figure5, echo=FALSE, warning=F, message=FALSE, fig.cap="Overall trend in vote types on corrected data" }
+trend_vote_types_correct = df_correct %>% 
+  filter(beskrivelse == "Endelig vedtagelse") %>%
+  filter(gd >= 0.5 ) %>% # removing left-overs from  wrong registration 
+  arrange(dato) %>% 
+  ggplot(aes(x = dato)) +
+  geom_smooth(aes(y = yes_n, colour = "Yes votes"), se = F, linetype = 2) +
+  geom_smooth(aes(y = no_n, colour = "No votes"), se = F, linetype = 5) +
+  geom_smooth(aes(y = neither_n, colour = "Neither votes"), se = F, linetype = 1) +
+  geom_smooth(aes(y = absent_n, colour = "Absent MPs"), se = F, linetype = 4) +
+  geom_vline(aes(xintercept = election_dates[1]), colour="black", linetype = "dashed") +
+  geom_vline(aes(xintercept = election_dates[2]), colour="black", linetype = "dashed") +
+  geom_vline(aes(xintercept = election_dates[3]), colour="black", linetype = "dashed") +
+  geom_vline(aes(xintercept = election_dates[4]), colour="black", linetype = "dashed") +
+  scale_x_date(date_breaks = "1 year", labels = date_format("%Y"))+ # formatting x-axis
+  scale_y_continuous(breaks = seq(0,100,20)) +
+  theme_minimal() + # set theme
+  xlab("Date")+ # name label for x-axis
+  ylab("Number of different votes")+ # name label for y-axis
+  theme(plot.title = element_text(hjust = 0.5)) +
+  labs(title = "Development of vote types (corrected data)", # give title
+       caption = "Dashed lines indicate parliamentary elections", # inserting note
+       colour = "Vote types") # change legend title
+
+trend_vote_types_correct 
+```
+
+Interestingly, we see a small downward sloping trend of yes-votes and upward sloping trend of no-votes in the period 2012-2018. This might indicate a small increase in the parliamentary polarization. This indication brings us back to the two measures of parliamentary polarization.
+
+Figure 6 show us the trend of graph density for all final votes in the parliament after the correction of the data. Compared to figure 2 we see a very different picture. We no longer see any clear and general trend towards parliamentary convergence. The graph density measure is stable across the entire time period with a small rise in the years 2007-2012. This indicates higher agreement in parliamentary votes in this period.
+
+```{r figure6, echo=FALSE, warning=F, message=FALSE, fig.cap="Overall trend in graph density on corrected data"}
+# Visualizing overall trend in graph density as rolling average and period id
+trend_graph_density_correct = df_correct %>% 
+  filter(beskrivelse == "Endelig vedtagelse") %>%
+  filter(gd >= 0.5 ) %>% # removing left-overs from  wrong registration 
+  arrange(dato) %>% 
+  mutate(periodeid = as.factor(periode)) %>% 
+  mutate(rolling_mean_gd = rollmean(gd, k = 5, na.pad = TRUE)) %>% 
+  ggplot(aes(x = dato, y = rolling_mean_gd)) +
+  geom_point(aes(colour = periodeid)) + # create a plot
+  geom_smooth() + # create a smooth line
+  geom_vline(aes(xintercept = election_dates[1]), colour="black", linetype = "dashed") +
+  geom_vline(aes(xintercept = election_dates[2]), colour="black", linetype = "dashed") +
+  geom_vline(aes(xintercept = election_dates[3]), colour="black", linetype = "dashed") +
+  geom_vline(aes(xintercept = election_dates[4]), colour="black", linetype = "dashed") +
+  scale_x_date(date_breaks = "1 year", labels = date_format("%Y"))+ # formatting x-axis
+  scale_y_continuous(breaks = seq(0.3,1,0.1)) +
+  theme_minimal() + # set theme
+  xlab("Date")+ # name label for x-axis
+  ylab("Graph Density")+ # name label for y-axis
+  theme(plot.title = element_text(hjust = 0.5),
+        legend.position = "none") + # center plot title
+  labs(title = "Development in graph density in Parliamentary votes (corrected data)", # give title
+       caption = "Dots are rolling means and colours indicate different parliamentary years") # give note
+
+trend_graph_density_correct
+```
+
+We see the same pattern when looking at the modularity metric with the corrected data in figure 7. Across the entire period see a pretty stable modularity measure around 0.1. This suggests no major movement towards either the consensus model or the majoritarian model. Once again, the period 2007-2012 stands out with a slightly lower modularity score suggesting parliamentary convergence in this period.
+
+```{r figure7, echo=FALSE, warning=F, message=FALSE, fig.cap="Overall trend in modularity on corrected data"}
+# Visualizing overall trend in modularity as rolling average and period id
+trend_modularity_correct = df_correct %>% 
+  filter(beskrivelse == "Endelig vedtagelse") %>%
+  filter(gd >= 0.5 ) %>% # removing left-overs from  wrong registration
+  arrange(dato) %>% 
+  mutate(periodeid = as.factor(periode)) %>% 
+  mutate(rolling_mean_modularity = rollmean(modularity, k = 5, na.pad = TRUE)) %>% 
+  ggplot(aes(x = dato, y = rolling_mean_modularity)) +
+  geom_point(aes(colour = periodeid)) + # create a plot
+  geom_smooth() + # create a smooth line
+  geom_vline(aes(xintercept = election_dates[1]), colour="black", linetype = "dashed") +
+  geom_vline(aes(xintercept = election_dates[2]), colour="black", linetype = "dashed") +
+  geom_vline(aes(xintercept = election_dates[3]), colour="black", linetype = "dashed") +
+  geom_vline(aes(xintercept = election_dates[4]), colour="black", linetype = "dashed") +
+  scale_x_date(date_breaks = "1 year", labels = date_format("%Y"))+ # formatting x-axis
+  scale_y_continuous(breaks = seq(0,0.7,0.1)) +
+  theme_minimal() + # set theme
+  xlab("Date")+ # name label for x-axis
+  ylab("Modularity")+ # name label for y-axis
+  theme(plot.title = element_text(hjust = 0.5), # center plot title
+        legend.position = "none") +   # remobel legend
+  labs(title = "Development in modularity in Parliamentary votes (corrected data)", # give title
+       caption = "Dots are rolling means and colours indicate different parliamentary years") # give note
+
+trend_modularity_correct
+```
+
+
+## Explaining the parliamentary convergence in 2007-2012
+It is relevant to try and explain the slight increase in parliamentary convergence in the years 2007-2012 illustrated by a small rise in graph density score and small decrease in modularity score. One factor explaining the variation could be the macroeconomic environment that characterized the Danish economy in that time period. Similar to the rest of the world economy, Denmark was suffering from a recession in the years after the US subprime market crashed in 2007-2008, which let to big public budget deficits (Danish Statistics, 2014). One theoretical argument explaining the increase in parliamentary agreement in this period could be that MPs focus less on ideological disagreements and special interest during crises. On the other hand, recessions lead to unpopular reforms which increase the incentives to vote-seek for politicians by disagreeing with the government. It is important to note, that this is not a causal argument. I have no hard data showing that it was the recession that caused the small variation in graph density and modularity score. But it is still very interesting to elaborate on the variation in parliamentary convergence that we see empirically. 
+
+\pagebreak
+# Discussion
+In the previous section, the analysis showed no overall trend towards parliamentary polarization or convergence. On the other hand, we see a small movement towards parliamentary convergence in the recession years after 2007. Following these findings, this section discuss the validity and implications of the results.
+
+## Validity: Do we measure polarization precisely?
+Validity concerns the question: Do we measure what we intend to? (Adcock & Collier 2001). In the context of this paper, we must consider if changes in graph density and modularity measure parliamentary polarization precisely. Two arguments can be raised against this statement where one is focusing on graph density as a measure, and the other is focusing on the conceptualization of parliamentary polarization in a Danish political context.
+
+### Measurement critique
+The first argument against validity is, that graph density as a measure of voting networks is sensitive to the size of the graph and thus should not be compared across graphs. In this case it means the number of MPs attending the vote. The reason is that graph density is measuring the number of ties as a proportion of the maximum theoretical possible number of ties in the graph (Wasserman & Faust, 1994: 102). Scott argues that because there is a maximum amount of links a agent can sustain in a network, the proportion of ties present in the graph will be a function of the number of nodes in the graph. In other words, larger networks will have lower densities than smaller graphs (Scott, 2013: 85). This is especially relevant to this analysis because the number of MPs attending the votes varies from 93 to 179 MPs in this dataset. Using this logic, the detected variation in graph density can be a result of variation in the number of MP's attending the votes rather than parliamentary polarization or convergence. 
+
+Several points can be raised against this measurement critique. First, the underlying assumption that agents have a maximum number of ties they can sustain is not relevant in the parliamentary voting context. There is no cost associated with a MP voting the same as other MPs. Actually, we see 432 consensus votes in the Danish parliament in the period of interest. Second, we see no general trend in the number of MPs attending votes in the parliament. As figure 8 shows, the average number of MPs attending votes remains stable around 110 MPs in the period 2004-2018. This is also the case for the recession period 2007-2012, where we see small variation in the graph density score. Third, the movement in graph density follows the movement in modularity, which strengthen our trust in graph density as a precise measure of parliamentary polarization. The stability of MP attendance can be explained by a qualitative insight from the MP-interview. According to Mette Gjerskov (MP), parliamentary voting in Denmark is strongly influenced by a so-called clearing norm, where the parties before every vote have agreed upon how many MPs should attend the vote from each party. Therefore, the mean number of MPs attending is not far from the minimum requirement of 90, for the vote to count (The Danish Parliament, 2018b).
+
+```{r figure8, echo=FALSE, warning=F, message=FALSE, fig.cap="Overall trend in MP attendance"}
+# Scatter plot of attending over time
+trend_attending = df_correct %>% 
+  filter(beskrivelse == "Endelig vedtagelse") %>%
+  filter(gd >= 0.5 ) %>% # removing left-overs from  wrong registration
+  mutate(attending = 179-absent_n) %>% # creating variable with the number of MPs attending
+  arrange(dato) %>%
+  mutate(periodeid = as.factor(periode)) %>% 
+  ggplot(aes(x = dato, y = attending)) +
+  geom_point(aes(colour = periodeid)) + # create a plot
+  geom_smooth() + # create a smooth line
+  geom_vline(aes(xintercept = election_dates[1]), colour="black", linetype = "dashed") +
+  geom_vline(aes(xintercept = election_dates[2]), colour="black", linetype = "dashed") +
+  geom_vline(aes(xintercept = election_dates[3]), colour="black", linetype = "dashed") +
+  geom_vline(aes(xintercept = election_dates[4]), colour="black", linetype = "dashed") +
+  scale_x_date(date_breaks = "1 year", labels = date_format("%Y"))+ # formatting x-axis
+  #scale_y_continuous(breaks = seq(0,0.7,0.1)) +
+  theme_minimal() + # set theme
+  xlab("Date")+ # name label for x-axis
+  ylab("Number of attending MPs")+ # name label for y-axis
+  theme(plot.title = element_text(hjust = 0.5), # center plot title
+        legend.position = "none") +   # remobel legend
+  labs(title = "Development of attending MPs over time", # give title
+       caption = "Dots are rolling means and colours indicate different parliamentary years") # give note
+
+trend_attending
+
+```
+
+
+### Conceptualization critique
+The second argument against the validity of this study is regarding the conceptualization. One could argue, that looking on divergence or convergence in voting behaviour among MP's isn't the best way of investigating the presence of parliamentary polarization in a Danish political context. The reason is that the Danish parliament is characterized by several parties organized in two equally sized blocks with very strong party discipline (Lønstrup, 2018). Thus, MPs have very little freedom to vote according to their personal opinion but most must often vote according to the party line. Thus another and maybe better conceptualization would be to change the unit of analysis to look at polarization or convergence among party positions in parliamentary votes. A different conceptualization that still focus the MPs would be to look at social media networks (e.g. Facebook or Twitter) and investigate to what extent MPs share and comment - both negatively and positively - posts from other MPs.
+
+The argument behind the chosen conceptualization is that the main task of MPs is to act as legislators and hence vote in the parliament. Thus, this paper focuses on the legislative role of MPs even though it is a hard test of parliamentary polarization due to the strong party discipline in the Danish democracy. Second, we see many cases of MPs voting against the party line making the party position a far from perfect measure of parliamentary polarization.
+	
+## Implications: What have we learned? 
+After discussing the validity of the paper's results, it is relevant to discuss the implications of the same results. I would like to highlight four implications of this analysis.
+
+First, this paper has the very concrete and direct implications that the Danish Parliament will change their API. The reason is that the analysis identified significant mistakes in the registration of voting data by the administration of the Danish parliament. This is an important impact to highlight because correct public data is crucial for future research of voting behaviour and polarization of the Danish democracy and the electorate's ability to hold their democratically representatives accountable. 
+
+Second, this paper finds no overall trend towards parliamentary polarization in Denmark. This is an important finding because it contradicts the general notion portrait in media, that politics are getting more and more conflictive and polarized. In other words, we are not further away from the consensus model of democracy today then we were 15 years ago. 
+
+Third, the paper finds an increase in parliamentary convergence in the recession years after 2007. This is noteworthy, because the finding indicates that our democratically elected representatives unite in times of crisis. The finding signals that MPs are able to resist the temptation of maximizing their public support by criticizing the hard-economic reforms of the government and instead take part in the restoration of the economy. In other words, MPs seem to resist the short-term temptation of vote-seeking.
+
+Lastly, this paper contributes to the growing literature using methods from social network analysis to investigate one of the most important concepts in political science: Democracy. Even though graph density can be criticized as a measure of parliamentary polarization, this paper still illustrates how social network metrics can be used to analyze changes in parliamentary voting behaviour. Future research could focus on other political arenas that is less characterized by social norms restricting MPs individual behaviour in order to detect the presence of polarization or convergence. One suggestion could be to look at social media recognitions among MPs over time.
+
+\pagebreak
+# Conclusion
+This paper contributes to the theoretical literature about democracy models by using social network methods to empirically analyze the condition and development of the Danish parliamentary democracy. Specifically, the paper investigates to what extent we see polarization or convergence in MP votes in the Danish parliament from 2004 to 2018.
+
+The theoretical foundation of the paper is the distinction between the majoritarian model and the consensus model of democracy described by Arendt Lijphart. The consensus model see polarization in parliamentary voting behaviour as a movement away from the democratic ideal, whereas the majoritarian model see no issue with parliamentary polarization if the parliament can reach a majority and thus function as legislator. 
+
+To answer the stated research question, the paper uses the metrics graph density and modularity from the field of social network analysis to measure parliamentary polarization. The two measures are calculated for all 6652 parliamentary votes in the dataset (1.2 million MP-votes in total). The data was collected using the API of the Danish Parliament. Each parliamentary voting is thus understood as a social network, where MPs are the nodes and ties represents that MPs voted the same. 
+
+The analysis revealed several interesting findings. First, the analysis identified that the Danish parliament has reported the voting data wrong for all votes before 2014. One impact of the paper is thus that the parliament will change the voting data available in their API. Second, I find no overall increase or decrease in graph density and modularity between 2004 and 2018. In other words, we see no overall movement towards parliamentary polarization or convergence in Denmark. Third, I find a small movement toward parliamentary convergence in the recession years 2007-2012. This indicates that members of the Danish parliament united slightly during the economic crisis and hence resisted the short-term interest of vote-seeking. All in all, this paper finds no empirical evidence for a significant movement towards either the consensus model or the majoritarian model of democracy. 
+
+\pagebreak
+# Literature
+**Adcock, R. & D. Collier (2001)**. "Measurement Validity: A Shared Standard for Qualitative and Quantitative Research" *American Political Science Review*, 95(3). pp. 529-546.
+
+**Blondel, V. D., Guillaume, J. L., Lambiotte, R., & Lefebvre, E. (2008).** Fast unfolding of communities in large networks. J*ournal of statistical mechanics: theory and experiment*, 2008(10).
+
+**Dal Maso, C., Pompa, G., Puliga, M., Riotta, G., & Chessa, A. (2014).** Voting behavior, coalitions and government strength through a complex network analysis. *PloS one*, 9(12).
+
+**The Danish Parliament. (2018a).** Åbne Data. Located 10-12-2018 at https://www.ft.dk/da/dokumenter/aabne_data#C1A4D348ECB64A6AA0CB5F2FE0EA30B2
+
+**The Danish Parliament. (2018b).** Beslutnignsdygtighed. Located 14-12-2018 at
+https://www.ft.dk/da/leksikon/Beslutningsdygtighed 
+
+**Danish Statistics. (2014).** Fortsat underskud på den offentlige saldo. Located at https://www.dst.dk/da/Statistik/nyt/NytHtml?cid=18426 
+
+**Downs, A. (1957).** An Economic Theory of Political Action in a Democracy. *Journal of Political Economy*. 65: 135-150
+
+**Easton, D. (1957).** An approach to the analysis of political systems. *World politics*, 9(3), 383-400.
+
+**Fierascu, S.,I., Pârvu, M., Topîrceanu, A., & Udrescu, M. (2018).** Exploring Party Switching in the post-1989 Romanian Politician Network from a Complex Network. *Romanian Journal of Political Science*, 18(1), 108-136
+
+**Fishkin, J. S. and Laslett, P. (2003).** Debating Deliberative Democracy, Oxford: Blackwell.
+
+**Habermas, J. (1995).** Diskurs, rätt och demokrati , Göteborg: *Daidalos*.
+
+**Koch, H. (1991).** Hvad er demokrati? (5.udg.). København: *Gyldendal*, pp. 7-31, 97-99.
+
+**Kopstein, J., Lichbach, M., & Hanson, S. E. (2014).** Comparative politics. *Cambridge University Press*.
+
+**Lijphart, A. (1999).** Patterns of Democracy, *Yale University Press*, 2012.
+
+**Lønstrup, Lars. (2018).** Partidisciplin vokser imod vælgernes ønske. *Djøf*. Located 14-12-2018 at https://www.djoefbladet.dk/artikler/2018/3/partidisciplin-vokser-imod-v-ae-lgernes--oe-nske.aspx 
+
+**Manin, B. (2002.** Den representative demokratins principer, Stockholm: *SNS Förlag*.
+
+**Putnam, R. D. (2000).** Bowling Alone. The collapse and revival of American community, New York: Simon & Schuster
+
+**Prell, C. (2012).** Social Network Analysis. History, theory & methodology. London: *SAGE*. 
+
+**Porter, M. A., Onnela, J. P., & Mucha, P. J. (2009).** Communities in networks. *Notices of the AMS*, 56(9), 1082-1097.
+
+**Ross, A. (1967).** Hvorfor demokrati? København: *Nyt Nordisk Forlag*; Arnold Busck, s. 102-172.
+
+**Sartori, G. (1970)** Concept Misformation in Comparative Politics. *American Political Science Review*, Vol. 64(4), pp. 1033-1053
+
+**Schumpeter, J. A. (1942).** Capitalism, Socialism and Democracy, New York: *HarperPerennial*.
+
+**Scott, J. (2013).** Social Network Analysis. (4rd ed.). London: *SAGE*.
+
+**Strömbäck, Jesper (2005**). In Search of a Standard: Four Models of Democracy and Their Normative Implications for Journalism. *Journalism Studie*
+
+**Wasserman, S., & Faust, K. (1994).** Structural analysis in the social sciences. Social network analysis: Methods and applications. New York, NY, US: *Cambridge University Press*.
+
+**Waugh AS, Pei L, Fowler JH, Mucha PJ, Porter MA. (2009).** Party polarization in congress: A social networks approach.
+
+**Zhang Y, Friend A, Traud AL, Porter MA, Fowler JH, et al. (2008).** Community structure in congressional cosponsorship networks. Physica A: Statistical Mechanics and its Applications 387: 1705-1712.
+

@@ -21,7 +21,6 @@ List of files in the repo:
 - voting_data_corrected.csv: Final dataset after correction of mistakes from the Danish Parliament.
 - voting_polarization.csv: Dataset with polarizationmeasures on data from the Danish Parliament.
 - voting_votetypes.csv: Dataset with the number of yes-votes, no-votes, neither-votes for each parliamentary vote.
-[Insert]
 
 #### Code
 
@@ -31,7 +30,8 @@ List of files in the repo:
 4. Visualization.R: Script producing all visualization in the project.
 
 #### Results
-[Insert]
+1. Conflict_or_cooperation.pdf: Final paper in PDF-format
+2. Conflict_or_cooperation.Rmd: Final paper as Rmarkdown-file
 
 ## More Information
 This project was created as an exam project for a graduate course (Social Network Analysis) at University of Copenhagen. The course repo is available here: https://github.com/golovchenko/sna2018.
